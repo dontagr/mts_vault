@@ -14,10 +14,14 @@ class EnvList extends BaseCommand
             ->setName('consul:list')
             ->setDescription('Метод для получения списка сред из консула')
         ;
+
+        parent::configure();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->initialize($input, $output);
+
         $envs = $this->getEnvs();
 
         return Command::SUCCESS;
