@@ -18,12 +18,13 @@ class AddKey extends BaseCommand
     private array $envs;
     private Data $vaultData;
     private bool $needCreate;
+    private bool $needGetEnvs;
 
     protected function configure(): void
     {
         $this
             ->setName('vault:add-key')
-            ->setDescription('Добавляет ключ в выбранный секрет по всем средам или выборочно при передачи -envs')
+            ->setDescription('Добавляет ключ в выбранный секрет по всем средам или выборочно при передачи -envs -presecret')
             ->addArgument('secret', InputArgument::REQUIRED, 'secret')
             ->addArgument('keyName', InputArgument::REQUIRED, 'key name')
             ->addArgument('value', InputArgument::REQUIRED, 'value')
@@ -44,6 +45,7 @@ class AddKey extends BaseCommand
         $this->envs = $input->getOption('envs');
         $this->needCreate = $input->getOption('create');
         $this->vaultData = $this->getVaultData();
+        $this->needGetEnvs = !$this->envs;
     }
 
     /**
@@ -53,27 +55,31 @@ class AddKey extends BaseCommand
     {
         $this->initialize($input, $output);
 
-        if (!$this->envs) {
-            $this->envs = $this->getEnvs();
-        }
+        foreach ($this->presecret as $presecret) {
+            $this->logger->info(sprintf('Выбрана зона разработки [%s]', $presecret));
 
-        foreach ($this->envs as $env) {
-            $values = $this->needCreate ? [] : $this->getValues($this->secret, $env, $this->vaultData);
-            if (!$values) {
-                $this->logger->info('Данных не найдено');
+            if ($this->needGetEnvs) {
+                $this->envs = $this->getEnvs($presecret);
             }
 
-            $this->addKey($values, $this->keyName, $this->value, $env);
-            if ($this->debugMode) {
-                $this->logger->info(sprintf('Сформированно значение %s', json_encode($values, JSON_THROW_ON_ERROR)));
-                continue;
-            }
+            foreach ($this->envs as $env) {
+                $values = $this->needCreate ? [] : $this->getValues($presecret, $this->secret, $env, $this->vaultData);
+                if (!$values) {
+                    $this->logger->info('Данных не найдено');
+                }
 
-            $status = $this->writeValues($this->secret, $env, $this->vaultData, $values);
-            if ($status) {
-                $this->logger->info('Запись завершина.');
-            } else {
-                $this->logger->error('Запись завершилась ошибкой.');
+                $this->addKey($values, $this->keyName, $this->value, $env);
+                if ($this->debugMode) {
+                    $this->logger->info(sprintf('Сформированно значение %s', json_encode($values, JSON_THROW_ON_ERROR)));
+                    continue;
+                }
+
+                $status = $this->writeValues($presecret, $this->secret, $env, $this->vaultData, $values);
+                if ($status) {
+                    $this->logger->info('Запись завершина.');
+                } else {
+                    $this->logger->error('Запись завершилась ошибкой.');
+                }
             }
         }
 
