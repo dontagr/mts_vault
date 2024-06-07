@@ -10,11 +10,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Violuke\Vault\Services\Data;
 
-class RenameKey extends BaseCommand
+class RemoveKey extends BaseCommand
 {
     private string $secret;
-    private string $oldKeyName;
-    private string $newKeyName;
+    private string $keyName;
     private array $envs;
     private Data $vaultData;
     private bool $needGetEnvs;
@@ -22,11 +21,10 @@ class RenameKey extends BaseCommand
     protected function configure(): void
     {
         $this
-            ->setName('vault:rename-key')
-            ->setDescription('Меняет название ключа в выбранном секрете по всем средам или выборочно при передачи -envs -presecret')
+            ->setName('vault:remove-key')
+            ->setDescription('Удаляет ключ в выбранном секрете по всем средам или выборочно при передачи -envs -presecret')
             ->addArgument('secret', InputArgument::REQUIRED, 'secret')
-            ->addArgument('oldKeyName', InputArgument::REQUIRED, 'old key name')
-            ->addArgument('newKeyName', InputArgument::REQUIRED, 'new key name')
+            ->addArgument('keyName', InputArgument::REQUIRED, 'key name')
             ->addOption('envs', 'e', InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'envs')
         ;
 
@@ -38,8 +36,7 @@ class RenameKey extends BaseCommand
         parent::initialize($input, $output);
 
         $this->secret = $this->getStringFromArgument('secret', $input);
-        $this->oldKeyName = $this->getStringFromArgument('oldKeyName', $input);
-        $this->newKeyName = $this->getStringFromArgument('newKeyName', $input);
+        $this->keyName = $this->getStringFromArgument('keyName', $input);
         $this->envs = $input->getOption('envs');
         $this->vaultData = $this->getVaultData();
         $this->needGetEnvs = !$this->envs;
@@ -63,14 +60,9 @@ class RenameKey extends BaseCommand
                 $values = $this->getValues($presecret, $this->secret, $env, $this->vaultData);
                 if (!$values) {
                     $this->logger->info('Данных не найдено');
-                    continue;
                 }
 
-                if (!$this->renameKey($values, $this->oldKeyName, $this->newKeyName)) {
-                    $this->logger->info('Не одно из заданий не удалось применить.');
-                    continue;
-                }
-
+                $this->removeKey($values, $this->keyName);
                 if ($this->debugMode) {
                     $this->logger->info(sprintf('Сформированно значение %s', json_encode($values, JSON_THROW_ON_ERROR)));
                     continue;
@@ -88,16 +80,11 @@ class RenameKey extends BaseCommand
         return Command::SUCCESS;
     }
 
-    protected function renameKey(array &$data, string $oldKeyName, string $newKeyName): bool
+    protected function removeKey(array &$data, string $keyName): bool
     {
-        if (!isset($data[$oldKeyName])) {
-            $this->logger->info(sprintf('переименование не возможно поскольку ключ = {%s} не найден', $oldKeyName));
-
-            return false;
+        if (isset($data[$keyName])) {
+            unset($data[$keyName]);
         }
-
-        $data[$newKeyName] = $data[$oldKeyName];
-        unset($data[$oldKeyName]);
 
         return true;
     }

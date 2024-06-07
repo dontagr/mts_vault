@@ -43,6 +43,11 @@ php index.php vault:add-key new-test-service keyName someVal
 php index.php vault:rename-key new-test-service keyName newKeyName
 ```
 
+Удалить ключ в секрете "new-test-service"
+```shell
+php index.php vault:remove-key new-test-service keyName
+```
+
 Так же у всех команд есть:
 1) режим дебага -d (посмотреть какие действия и где будут сделаны без сохранения)
 2) греческие сервера можно передавать через -e в таком случае действия будут проводится только с выбранными окружениями а не со всеми доступными в консуле

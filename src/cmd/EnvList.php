@@ -22,7 +22,11 @@ class EnvList extends BaseCommand
     {
         $this->initialize($input, $output);
 
-        $envs = $this->getEnvs();
+        foreach ($this->presecret as $presecret) {
+            $this->logger->info(sprintf('Выбрана зона разработки [%s]', $presecret));
+
+            $this->getEnvs($presecret);
+        }
 
         return Command::SUCCESS;
     }
