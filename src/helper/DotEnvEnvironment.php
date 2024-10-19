@@ -8,6 +8,11 @@ class DotEnvEnvironment
     {
         $lines = file($path . '/.env');
         foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line) || $line[0] == '#') {
+                continue;
+            }
+
             [$key, $value] = explode('=', $line, 2);
             $key = trim($key);
             $value = trim($value);
