@@ -63,9 +63,10 @@ class BaseCommand extends Command
         return (new ServiceFactory([], $this->logger, $client))->get('data');
     }
 
-    protected function getStringFromArgument(string $key, InputInterface $input): string
+    protected function getStringFromArgument(string $key, InputInterface $input, bool $required = true): string
     {
-        if (!$str = $input->getArgument($key)) {
+        $str = $input->getArgument($key);
+        if ($required && !$str) {
             throw new RuntimeException(sprintf('Не передали обязательный аргумент %s', $key));
         }
 

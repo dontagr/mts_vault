@@ -27,7 +27,7 @@ class AddKey extends BaseCommand
             ->setDescription('Добавляет ключ в выбранный секрет по всем средам или выборочно при передачи -envs -presecret')
             ->addArgument('secret', InputArgument::REQUIRED, 'secret')
             ->addArgument('keyName', InputArgument::REQUIRED, 'key name')
-            ->addArgument('value', InputArgument::REQUIRED, 'value')
+            ->addArgument('value', InputArgument::OPTIONAL, 'value', '')
             ->addOption('create', 'c', InputOption::VALUE_NONE, 'опционально для случаев когда надо создать новый секрет')
             ->addOption('envs', 'e', InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'envs')
         ;
@@ -41,7 +41,7 @@ class AddKey extends BaseCommand
 
         $this->secret = $this->getStringFromArgument('secret', $input);
         $this->keyName = $this->getStringFromArgument('keyName', $input);
-        $this->value = $this->getStringFromArgument('value', $input);
+        $this->value = $this->getStringFromArgument('value', $input, false);
         $this->envs = $input->getOption('envs');
         $this->needCreate = $input->getOption('create');
         $this->vaultData = $this->getVaultData();
